@@ -13,9 +13,9 @@ const Home = () => {
     [0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0],
   ]);
-  const clickHandler = (x: number, y: number) => {
-    console.log(x, y);
-    const newBoard = structuredClone(board);
+
+  const isValidMove = (board: number[][], x: number, y: number, turnColor: number): boolean => {
+    if (board[y][x] !== 0) return false;
     const directions = [
       [0, 1],
       [0, -1],
@@ -27,28 +27,80 @@ const Home = () => {
       [-1, -1],
     ];
 
-    for (const dir of directions) {
-      if (board[y + dir[0]] !== undefined) {
-        if (board[y + dir[0]][x] !== undefined && board[y + dir[0]][x] === 2 / turnColor) {
-          newBoard[y][x] = turnColor;
-          setTurnColor(2 / turnColor);
-        } else if (board[y][x] !== undefined && board[y][x] === 2 / turnColor) {
-          newBoard[y][x] = turnColor;
-          setTurnColor(2 / turnColor);
-        } else if (board[y][x + dir[1]] !== undefined && board[y][x + dir[1]] === 2 / turnColor) {
-          newBoard[y][x] = turnColor;
-          setTurnColor(2 / turnColor);
-        } else if (
-          board[y + dir[0]][x + dir[1]] !== undefined &&
-          board[y + dir[0]][x + dir[1]] === 2 / turnColor
-        ) {
-          newBoard[y][x] = turnColor;
-          setTurnColor(2 / turnColor);
+    for (const [dx, dy] of directions) {
+      let nx = x + dx;
+      let ny = y + dy;
+      let foundOpponent = false;
+
+      while (
+        nx >= 0 &&
+        nx < 8 &&
+        ny >= 0 &&
+        ny < 8 &&
+        board[ny][nx] === (turnColor === 1 ? 2 : 1)
+      ) {
+        nx += dx;
+        ny += dy;
+        foundOpponent = true;
+      }
+
+      if (foundOpponent && nx >= 0 && nx < 8 && ny >= 0 && ny < 8 && board[ny][nx] === turnColor) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  const makeMove = (board: number[][], x: number, y: number, turnColor: number): number[][] => {
+    const newBoard = board.map((row) => row.slice());
+    newBoard[y][x] = turnColor;
+
+    const directions = [
+      [0, 1],
+      [0, -1],
+      [1, 0],
+      [1, 1],
+      [1, -1],
+      [-1, 0],
+      [-1, 1],
+      [-1, -1],
+    ];
+
+    for (const [dx, dy] of directions) {
+      let nx = x + dx;
+      let ny = y + dy;
+      const path = [];
+
+      while (
+        nx >= 0 &&
+        nx < 8 &&
+        ny >= 0 &&
+        ny < 8 &&
+        board[ny][nx] === (turnColor === 1 ? 2 : 1)
+      ) {
+        path.push([nx, ny]);
+        nx += dx;
+        ny += dy;
+      }
+
+      if (nx >= 0 && nx < 8 && ny >= 0 && ny < 8 && board[ny][nx] === turnColor) {
+        for (const [px, py] of path) {
+          newBoard[py][px] = turnColor;
         }
       }
     }
 
-    setBoard(newBoard);
+    return newBoard;
+  };
+  const clickHandler = (x: number, y: number) => {
+    console.log(`Clicked cell: (${x}, ${y})`);
+    if (isValidMove(board, x, y, turnColor)) {
+      const newBoard = makeMove(board, x, y, turnColor);
+      setBoard(newBoard);
+      setTurnColor(turnColor === 1 ? 2 : 1);
+    } else {
+      console.log('Invalid move');
+    }
   };
   return (
     <div className={styles.container}>
