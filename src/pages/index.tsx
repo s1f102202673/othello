@@ -2,8 +2,31 @@ import { useState } from 'react';
 import styles from './index.module.css';
 
 const Home = () => {
+  const countStones = (board: number[][]): { blackCount: number; whiteCount: number } => {
+    let blackCount = 0;
+    let whiteCount = 0;
+    for (const row of board) {
+      for (const cell of row) {
+        if (cell === 1) blackCount++;
+        if (cell === 2) whiteCount++;
+      }
+    }
+    return { blackCount, whiteCount };
+  };
+
+  const initialStoneCounts = countStones([
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 1, 2, 0, 0, 0],
+    [0, 0, 0, 2, 1, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0],
+  ]);
+
   const [turnColor, setTurnColor] = useState(1);
-  const [board, setBoard] = useState([
+  const [board, setBoard] = useState<number[][]>([
     [0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0],
@@ -15,6 +38,9 @@ const Home = () => {
   ]);
 
   const [winner, setWinner] = useState<number | null>(null);
+  const [stoneCounts, setStoneCounts] = useState<{ blackCount: number; whiteCount: number }>(
+    initialStoneCounts,
+  );
 
   const isValidMove = (board: number[][], x: number, y: number, turnColor: number): boolean => {
     if (board[y][x] !== 0) return false;
@@ -96,7 +122,6 @@ const Home = () => {
   };
 
   const checkGameEnd = (board: number[][]): boolean => {
-    // 両プレイヤーに有効な手がないか確認
     for (let y = 0; y < 8; y++) {
       for (let x = 0; x < 8; x++) {
         if (isValidMove(board, x, y, 1) || isValidMove(board, x, y, 2)) {
@@ -128,6 +153,7 @@ const Home = () => {
       const newBoard = makeMove(board, x, y, turnColor);
       setBoard(newBoard);
       setTurnColor(turnColor === 1 ? 2 : 1);
+      setStoneCounts(countStones(newBoard));
       if (checkGameEnd(newBoard)) {
         const gameWinner = calculateWinner(newBoard);
         setWinner(gameWinner);
@@ -136,8 +162,13 @@ const Home = () => {
       console.log('Invalid move');
     }
   };
+
   return (
     <div className={styles.container}>
+      <div className={styles.scoreBoard}>
+        <div className={styles.score}>黒石: {stoneCounts.blackCount}</div>
+        <div className={styles.score}>白石: {stoneCounts.whiteCount}</div>
+      </div>
       <div className={styles.boardStyle}>
         {board.map((row, y) =>
           row.map((color, x) => (
